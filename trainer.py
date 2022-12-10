@@ -8,20 +8,25 @@ from dataloader import CoraDataset
 
 
 
-class Trainer:
-    def __init__(self):
+class Trainer(object):
+    def __init__(self,args):
         # Initialize
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.seed = 1234
         seed_everything(self.seed)
-        
+
+        # argparse_settings
+        self.args = args
+        self.hidden_units = args.hidden_units
+        self.lr = args.lr
+
         # Data 
         cora_dataloader = CoraDataset(self.device)
         self.g, self.features, self.labels, self.train_mask, self.val_mask, self.test_mask, self.num_classes = cora_dataloader.load_cora_data()
         
         # Model
         self.input_dim = self.features.shape[1]
-        self.hidden_units = 16
+        # self.hidden_units = 16
         self.output_dim = self.num_classes
 
         self.model = GCN(self.input_dim, self.hidden_units, self.output_dim)
@@ -31,7 +36,7 @@ class Trainer:
         
         # Training Settings
         self.epoch_num = 100
-        self.lr = 0.01
+        # self.lr = 0.01
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         self.loss_fn = nn.CrossEntropyLoss()
         
@@ -97,18 +102,21 @@ class Trainer:
         print("Final Test Acc: {}".format(test_acc))
         
     
-def option():
-    parser = argparse.ArgumentParser()
+def build_args():
+    parser = argparse.ArgumentParser(description = 'Process some integers')
+    parser.add_argument('--hidden_units', default=16, type=int, help='this is the hidden_units size of training samples')
+    parser.add_argument('--lr', default=0.01, type=float, help='this is the lr size of training samples')
+    args = parser.parse_args()
 
-    ...
+    return args                                              
 
 
-
-def main():
-    gcn_trainer = Trainer()
+def main(args):
+    gcn_trainer = Trainer(args)
     gcn_trainer.train()
     gcn_trainer.test()
     
     
 if __name__ == "__main__":
-    main()
+    args = build_args()
+    main(args)
