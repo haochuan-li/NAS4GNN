@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 from utils import seed_everything
-from models import GCN
+from utils import select_model
 from dataloader import CoraDataset
 
 
@@ -29,8 +29,8 @@ class Trainer(object):
         # self.hidden_units = 16
         self.output_dim = self.num_classes
 
-        self.model = GCN(self.input_dim, self.hidden_units, self.output_dim)
-
+        self.model = select_model(self.args, self.input_dim, self.output_dim)
+        
         # To Device
         self.model = self.model.to(self.device)
         
@@ -43,6 +43,7 @@ class Trainer(object):
         self.best_val_acc = 0
         self.best_model = None
         
+        print(self.model)
         
     def train(self):
         for epoch in tqdm(range(self.epoch_num), desc="Epoch Process"):
@@ -104,8 +105,14 @@ class Trainer(object):
     
 def build_args():
     parser = argparse.ArgumentParser(description = 'Process some integers')
-    parser.add_argument('--hidden_units', default=16, type=int, help='this is the hidden_units size of training samples')
+    parser.add_argument('--model', type=str, default='gcn', help='select model to train/test')
+    parser.add_argument('--hidden_units', default=16,
+                        nargs='+', type=int, help='this is the hidden_units size of training samples')
     parser.add_argument('--lr', default=0.01, type=float, help='this is the lr size of training samples')
+    parser.add_argument('--dropout', default=0.5, type=float, help='model dropout')
+    parser.add_argument('--heads', default=8, nargs='+', type=int, help='heads num for GAT')
+    
+    
     args = parser.parse_args()
 
     return args                                              

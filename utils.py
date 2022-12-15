@@ -2,6 +2,7 @@ import os
 import torch
 import random
 import numpy as np
+from models import *
 
 def seed_everything(seed=1234):
     random.seed(seed)
@@ -10,3 +11,12 @@ def seed_everything(seed=1234):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
+    
+    
+def select_model(args, input_dim, output_dim):
+    if args.model.lower() == 'gcn':
+        model = GCN(args,input_dim,output_dim)
+    elif args.model.lower() == 'gat':
+        model = GAT(args,input_dim,output_dim)
+        
+    return model
