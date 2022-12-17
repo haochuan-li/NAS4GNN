@@ -1,18 +1,29 @@
+import os
 import argparse
+from datetime import datetime
 import torch
 import torch.nn as nn
+from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
 from utils import seed_everything
 from utils import select_model
 from dataloader import CoraDataset
 
-
+TIMESTAMP = "{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())
 
 class Trainer(object):
     def __init__(self,args):
         # Initialize
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.seed = 1234
+        self.log_dir = args.log_dir
+        self.output_dir = os.path.join(args.output_dir, "[" + args.model + "] "  + TIMESTAMP)
+        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.log_dir, exist_ok=True)
+        self.train_writer = SummaryWriter(os.path.join(
+                self.log_dir,"[" + args.model.upper() + "] " + TIMESTAMP + 'train'), 'train')
+        self.val_writer = SummaryWriter(os.path.join(
+            self.log_dir, "[" + args.model.upper() + "] " + TIMESTAMP + 'val'), 'val')
         seed_everything(self.seed)
 
         # argparse_settings
@@ -44,6 +55,11 @@ class Trainer(object):
         self.best_model = None
         
         print(self.model)
+
+    def save_model(self, filename=None):
+        if not filename:
+            filename = os.path.join(self.output_dir, "model.pth")
+            torch.save(self.model.state_dict(), filename)
         
     def train(self):
         for epoch in tqdm(range(self.epoch_num), desc="Epoch Process"):
@@ -54,11 +70,17 @@ class Trainer(object):
             
             if self.best_val_acc < val_acc:
                 self.best_val_acc = val_acc
-                self.best_model = self.model
+                self.save_model()
             
             if epoch % 5 == 0:
                 print('In epoch {}, train loss: {:.3f}, train acc: {:.3f}, val loss: {:.3f}, val acc: {:.3f} (best {:.3f}))'.format(
                     epoch, train_loss, train_acc, val_loss, val_acc, self.best_val_acc))
+                self.train_writer.add_scalar("Loss", train_loss, epoch)
+                self.val_writer.add_scalar("Loss", val_loss, epoch)
+                self.train_writer.add_scalar("Accuracy", train_acc, epoch)
+                self.val_writer.add_scalar("Accuracy", val_acc, epoch)
+
+
 
 
     def train_one_epoch(self):
@@ -82,7 +104,7 @@ class Trainer(object):
     @torch.no_grad()
     def evaluate_one_epoch(self):
         self.model.eval()
-        
+
         logits = self.model(self.g, self.features)
         pred = logits.argmax(1)
         val_loss = self.loss_fn(logits[self.val_mask], self.labels[self.val_mask])
@@ -94,6 +116,10 @@ class Trainer(object):
     @torch.no_grad()
     def test(self):
         self.model.eval()
+
+        print("Loading Best Model...")
+        self.model.load_state_dict(torch.load(
+                    os.path.join(self.output_dir, "model.pth"), map_location=str(self.device)))
         
         logits = self.model(self.g, self.features)
         pred = logits.argmax(1)
@@ -111,6 +137,8 @@ def build_args():
     parser.add_argument('--lr', default=0.01, type=float, help='this is the lr size of training samples')
     parser.add_argument('--dropout', default=0.5, type=float, help='model dropout')
     parser.add_argument('--heads', default=8, nargs='+', type=int, help='heads num for GAT')
+    parser.add_argument("--log_dir", default='./logs', type=str, help='path to save tensorboard')
+    parser.add_argument("--output_dir", default='./outputs', type=str, help='path to save tensorboard')
     
     
     args = parser.parse_args()
