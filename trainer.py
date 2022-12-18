@@ -7,7 +7,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
 from utils import seed_everything
 from utils import select_model
-from dataloader import CoraDataset
+from utils import select_data
 
 TIMESTAMP = "{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())
 
@@ -32,8 +32,7 @@ class Trainer(object):
         self.lr = args.lr
 
         # Data 
-        cora_dataloader = CoraDataset(self.device)
-        self.g, self.features, self.labels, self.train_mask, self.val_mask, self.test_mask, self.num_classes = cora_dataloader.load_cora_data()
+        self.g, self.features, self.labels, self.train_mask, self.val_mask, self.test_mask, self.num_classes = select_data(self.args, self.device)
         
         # Model
         self.input_dim = self.features.shape[1]
@@ -132,6 +131,7 @@ class Trainer(object):
 def build_args():
     parser = argparse.ArgumentParser(description = 'Process some integers')
     parser.add_argument('--model', type=str, default='gcn', help='select model to train/test')
+    parser.add_argument('--dataset', type=str, default='cora', help='select dataset to train/test')
     parser.add_argument('--hidden_units', default=16,
                         nargs='+', type=int, help='this is the hidden_units size of training samples')
     parser.add_argument('--lr', default=0.01, type=float, help='this is the lr size of training samples')
