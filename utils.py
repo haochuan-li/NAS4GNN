@@ -20,3 +20,11 @@ def select_model(args, input_dim, output_dim):
         model = GAT(args,input_dim,output_dim)
         
     return model
+
+def select_data(args, device):
+    if args.dataset.lower() == 'cora':
+        dataset = CoraDataset(device)
+    elif args.dataset.lower() == 'citeseer':
+        dataset = CiteseerDataset(device)
+        
+    return dataset.load_cora_data()
