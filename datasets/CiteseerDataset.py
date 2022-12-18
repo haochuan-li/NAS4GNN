@@ -6,7 +6,7 @@ class CiteseerDataset:
         self.num_classes = self.dataset.num_classes
         self.device = device
         
-    def load_cora_data(self):
+    def load_data(self):
         
         g = self.dataset[0].to(self.device)
         features = g.ndata['feat']
