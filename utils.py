@@ -3,6 +3,7 @@ import torch
 import random
 import numpy as np
 from models import *
+from datasets import *
 
 def seed_everything(seed=1234):
     random.seed(seed)
@@ -26,5 +27,7 @@ def select_data(args, device):
         dataset = CoraDataset(device)
     elif args.dataset.lower() == 'citeseer':
         dataset = CiteseerDataset(device)
+    elif args.dataset.lower() == 'pubmed':
+        dataset = PubmedDataset(device)
         
     return dataset.load_cora_data()
