@@ -30,4 +30,4 @@ def select_data(args, device):
     elif args.dataset.lower() == 'pubmed':
         dataset = PubmedDataset(device)
         
-    return dataset.load_cora_data()
+    return dataset.load_data()
