@@ -5,11 +5,10 @@ import torch
 import torch.nn as nn
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm import tqdm
-from utils import seed_everything
-from utils import select_model
-from utils import select_data
+from utils import seed_everything,select_model,select_data,setup_logger
 
 TIMESTAMP = "{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())
+split_line = "-" * 50
 
 class Trainer(object):
     def __init__(self,args):
@@ -53,7 +52,24 @@ class Trainer(object):
         self.best_val_acc = 0
         self.best_model = None
         
-        print(self.model)
+        self._default_setup()
+
+    def _default_setup(self) -> None:
+        # setup the root logger of the `cpu` library to show
+        # the log messages generated from this library
+        log_dir = os.path.join(self.log_dir, "train_log")
+        self.logger = setup_logger(self.device, output_dir=os.path.join(
+            log_dir, "[" + self.args.model + "] " + TIMESTAMP), rank=0)
+        
+        self.logger.info(f"\n{split_line}\n"
+                         # f"Work directory: {self.work_dir}\n"
+                         #f"Checkpoint directory: {self.output_dir}\n"
+                         f"Tensorboard directory: {self.log_dir}\n"
+                         f"Model: {self.model}\n"
+                         f"Optimizer: {self.optimizer}\n"
+                         f"hidden_units: {self.args.hidden_units}\n" 
+                         f"{split_line}")
+        self.logger.info(self.model)
 
     def save_model(self, filename=None):
         if not filename:
@@ -72,7 +88,7 @@ class Trainer(object):
                 self.save_model()
             
             if epoch % 5 == 0:
-                print('In epoch {}, train loss: {:.3f}, train acc: {:.3f}, val loss: {:.3f}, val acc: {:.3f} (best {:.3f}))'.format(
+                self.logger.info('In epoch {}, train loss: {:.3f}, train acc: {:.3f}, val loss: {:.3f}, val acc: {:.3f} (best {:.3f}))'.format(
                     epoch, train_loss, train_acc, val_loss, val_acc, self.best_val_acc))
                 self.train_writer.add_scalar("Loss", train_loss, epoch)
                 self.val_writer.add_scalar("Loss", val_loss, epoch)
@@ -116,7 +132,7 @@ class Trainer(object):
     def test(self):
         self.model.eval()
 
-        print("Loading Best Model...")
+        self.logger.info("Loading Best Model...")
         self.model.load_state_dict(torch.load(
                     os.path.join(self.output_dir, "model.pth"), map_location=str(self.device)))
         
@@ -125,7 +141,7 @@ class Trainer(object):
         
         test_acc = (pred[self.test_mask] == self.labels[self.test_mask]).float().mean()
         
-        print("Final Test Acc: {}".format(test_acc))
+        self.logger.info("Final Test Acc: {}".format(test_acc))
         
     
 def build_args():
@@ -137,6 +153,9 @@ def build_args():
     parser.add_argument('--lr', default=0.01, type=float, help='this is the lr size of training samples')
     parser.add_argument('--dropout', default=0.5, type=float, help='model dropout')
     parser.add_argument('--heads', default=8, nargs='+', type=int, help='heads num for GAT')
+    parser.add_argument('--edge_drop', default=0.5,type=float)
+    parser.add_argument('--alpha', default=0.1, type=float, help="Teleport Probability")
+    parser.add_argument("--k", default=10, type=int, help="Number of propagation steps")
     parser.add_argument("--log_dir", default='./logs', type=str, help='path to save tensorboard')
     parser.add_argument("--output_dir", default='./outputs', type=str, help='path to save tensorboard')
     
