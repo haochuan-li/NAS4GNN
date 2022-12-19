@@ -38,7 +38,7 @@ python trainer.py --model gat --dataset pubmed --hidden_units 16 --lr 0.1 --drop
 python trainer.py --model gat --dataset pubmed --hidden_units 16 --lr 0.01 --dropout 0.0 --heads 8
 python trainer.py --model gat --dataset pubmed --hidden_units 16 --lr 0.001 --dropout 0.0 --heads 8
 
-# APPNP citeseer
+# APPNP pubmed
 python trainer.py --model appnp --dataset pubmed --hidden_units 16 --lr 0.1 --dropout 0.0 --edge_drop 0.5 --alpha 0.1 --k 10
 python trainer.py --model appnp --dataset pubmed --hidden_units 16 --lr 0.01 --dropout 0.0 --edge_drop 0.5 --alpha 0.1 --k 10
 python trainer.py --model appnp --dataset pubmed --hidden_units 16 --lr 0.001 --dropout 0.0 --edge_drop 0.5 --alpha 0.1 --k 10
