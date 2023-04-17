@@ -1,0 +1,16 @@
+digraph {
+	graph [rankdir=LR]
+	0 [label=Input]
+	1 [label=gin]
+	2 [label=cheb]
+	3 [label=gat]
+	4 [label=arma]
+	5 [label=Output]
+	0 -> 1
+	0 -> 2
+	1 -> 3
+	1 -> 4
+	4 -> 5
+	3 -> 5
+	2 -> 5
+}
